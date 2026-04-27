@@ -16,7 +16,7 @@ declare(strict_types=1);
 
 return [
     // אימות חתימת webhook (מספיק כדי להריץ listener + url_validation)
-    'webhook_secret_token' => getenv('ZOOM_WEBHOOK_SECRET_TOKEN') ?: '',
+    'webhook_secret_token' => getenv('ZOOM_WEBHOOK_SECRET_TOKEN') ?: 'gqjG-z7PTOKGgU7DsmUsEA',
 
     // אופציונלי — רק אם רוצים לקרוא ל-API ולהקצות Licensed
     'account_id' => getenv('ZOOM_ACCOUNT_ID') ?: '',
