@@ -3,10 +3,10 @@
 declare(strict_types=1);
 
 /**
- * מאזין Zoom Webhook — אימות, url_validation, והקצאת רישיון (Licensed) למשתמש.
+ * מאזין Zoom Webhook — אימות, url_validation, ואופציונלית הקצאת רישיון דרך API.
  *
+ * Secret Token מאמת בקשות בלבד. להקצאת רישיון צריך גם Server-to-Server OAuth בקונפיג.
  * דרישות PHP: curl, json, hash
- * הרשאות S2S: user:write:admin (או scope מתאים לעדכון משתמש)
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -22,7 +22,6 @@ if (! is_file($configPath)) {
 $config = require $configPath;
 
 require_once __DIR__ . '/src/ZoomWebhookVerifier.php';
-require_once __DIR__ . '/src/ZoomApiClient.php';
 
 $rawBody = file_get_contents('php://input') ?: '';
 
@@ -117,11 +116,22 @@ $clientId = (string) ($config['client_id'] ?? '');
 $clientSecret = (string) ($config['client_secret'] ?? '');
 
 if ($accountId === '' || $clientId === '' || $clientSecret === '') {
-    log_webhook($config, 'api_credentials_missing', ['user_id' => $userId]);
-    http_response_code(500);
-    echo json_encode(['error' => 'Zoom API credentials not configured']);
+    log_webhook($config, 'event_received_no_api_credentials', [
+        'user_id' => $userId,
+        'event' => $event,
+        'hint' => 'Add S2S OAuth (account_id, client_id, client_secret) to assign license via API.',
+    ]);
+    http_response_code(200);
+    echo json_encode([
+        'status' => 'ok',
+        'license' => 'skipped',
+        'reason' => 'Zoom REST API credentials not configured (Secret Token cannot call the API)',
+        'user_id' => $userId,
+    ]);
     exit;
 }
+
+require_once __DIR__ . '/src/ZoomApiClient.php';
 
 try {
     $api = new ZoomApiClient($accountId, $clientId, $clientSecret);

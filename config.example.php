@@ -3,17 +3,22 @@
 /**
  * העתק ל-config.php והשלם ערכים (אל תעלה את config.php ל-git).
  *
- * Zoom Marketplace → האפליקציה שלך → Feature → Webhooks → Secret Token
- * Zoom Marketplace → האפליקציה שלך → App Credentials (Server-to-Server OAuth)
+ * Secret Token — רק לאימות שבקשות ה-webhook באמת מ-Zoom. זה לא מפתח API;
+ * לא ניתן לשנות רישיון למשתמש בלי אפליקציית API (ראו למטה).
+ *
+ * Zoom → Feature → Webhooks → Secret Token
+ *
+ * להקצאת רישיון אוטומטית דרך REST API צריך בנוסף Server-to-Server OAuth
+ * (App type: Server-to-Server) — Create → App Credentials: Account ID, Client ID, Client Secret.
  */
 
 declare(strict_types=1);
 
 return [
-    // אימות חתימת webhook (חובה לפרודקשן)
+    // אימות חתימת webhook (מספיק כדי להריץ listener + url_validation)
     'webhook_secret_token' => getenv('ZOOM_WEBHOOK_SECRET_TOKEN') ?: '',
 
-    // Server-to-Server OAuth — להקצאת רישיון דרך REST API
+    // אופציונלי — רק אם רוצים לקרוא ל-API ולהקצות Licensed
     'account_id' => getenv('ZOOM_ACCOUNT_ID') ?: '',
     'client_id' => getenv('ZOOM_CLIENT_ID') ?: '',
     'client_secret' => getenv('ZOOM_CLIENT_SECRET') ?: '',
