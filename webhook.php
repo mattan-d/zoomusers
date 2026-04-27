@@ -94,7 +94,11 @@ function extract_user_id(array $payload): ?string
     return null;
 }
 
-$licenseEvents = $config['license_on_events'] ?? ['user.created', 'user.invitation_accepted'];
+$licenseEvents = $config['license_on_events'] ?? [
+    'user.created',
+    'user.invitation_accepted',
+    'user.signed_in',
+];
 
 if (! in_array($event, $licenseEvents, true)) {
     log_webhook($config, 'event_ignored', ['event' => $event]);

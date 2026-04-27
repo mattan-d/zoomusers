@@ -27,6 +27,7 @@ return [
     'license_on_events' => [
         'user.created',
         'user.invitation_accepted',
+        'user.signed_in',
     ],
 
     // לוג לדיבוג (בפרודקשן כבה או הפנה לקובץ מאובטח)
