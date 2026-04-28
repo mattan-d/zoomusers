@@ -30,6 +30,12 @@ return [
         'user.signed_in',
     ],
 
+    // אחרי הקצאת רישיון — הוספת המשתמש לקבוצה ב-Zoom (User Management → Groups)
+    // באפליקציית S2S יש להוסיף scopes: group:read:admin, group:write:admin
+    'licensed_users_group_name' => getenv('ZOOM_LICENSED_USERS_GROUP_NAME') ?: 'Users Licensed',
+    // אופציונלי — אם מוגדר, מדלגים על חיפוש לפי שם (מומלץ בפרודקשן)
+    'licensed_users_group_id' => getenv('ZOOM_LICENSED_USERS_GROUP_ID') ?: '',
+
     // לוג לדיבוג (בפרודקשן כבה או הפנה לקובץ מאובטח)
     'log_file' => __DIR__ . '/storage/webhook.log',
 ];

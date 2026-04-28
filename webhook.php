@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * מאזין Zoom Webhook — אימות, url_validation, ואופציונלית הקצאת רישיון דרך API.
+ * מאזין Zoom Webhook — אימות, url_validation, הקצאת רישיון, והוספת המשתמש לקבוצה (ברירת מחדל: Users Licensed).
  *
  * Secret Token מאמת בקשות בלבד. להקצאת רישיון צריך גם Server-to-Server OAuth בקונפיג.
  * דרישות PHP: curl, json, hash
@@ -155,8 +155,49 @@ try {
         exit;
     }
 
+    $out = ['status' => 'licensed', 'user_id' => $userId];
+
+    $groupIdConfigured = trim((string) ($config['licensed_users_group_id'] ?? ''));
+    $groupName = (string) ($config['licensed_users_group_name'] ?? 'Users Licensed');
+
+    $groupId = null;
+    if ($groupIdConfigured !== '') {
+        $groupId = $groupIdConfigured;
+    } else {
+        try {
+            $groupId = $api->findGroupIdByName($groupName);
+        } catch (Throwable $e) {
+            log_webhook($config, 'group_lookup_failed', ['message' => $e->getMessage(), 'user_id' => $userId]);
+            $out['group'] = 'lookup_failed';
+            $out['group_detail'] = $e->getMessage();
+        }
+    }
+
+    if (! isset($out['group'])) {
+        if ($groupId === null || $groupId === '') {
+            log_webhook($config, 'group_not_found', ['name' => $groupName, 'user_id' => $userId]);
+            $out['group'] = 'skipped';
+            $out['group_reason'] = 'group_not_found';
+        } else {
+            $gResult = $api->addUserToGroup($groupId, $userId);
+            log_webhook($config, 'group_member_request', [
+                'user_id' => $userId,
+                'group_id' => $groupId,
+                'http_code' => $gResult['http_code'],
+            ]);
+            if ($gResult['http_code'] >= 400) {
+                $out['group'] = 'api_error';
+                $out['group_http_code'] = $gResult['http_code'];
+                $out['group_detail'] = $gResult['body'];
+            } else {
+                $out['group'] = 'added';
+                $out['group_id'] = $groupId;
+            }
+        }
+    }
+
     http_response_code(200);
-    echo json_encode(['status' => 'licensed', 'user_id' => $userId]);
+    echo json_encode($out);
 } catch (Throwable $e) {
     log_webhook($config, 'exception', ['message' => $e->getMessage(), 'user_id' => $userId]);
     http_response_code(500);
